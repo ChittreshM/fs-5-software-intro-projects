@@ -54,4 +54,8 @@ def calculate_desired_acceleration(car: dict, K_P: float, K_I: float = 0.0, K_D:
 def acceleration_to_throttle_percentage(acceleration_desired: float, mass: float = 1000, max_throttle_force: float = 5000) -> float:
         #input: desired_acceleration(float)
         #output: throttle percentage (float, -1 to 1)
-        pass # delete this line and write your code to convert desired acceleration to throttle here
+        max_acceleration = max_throttle_force / mass  # check difference between force and max_throttle_force
+        throttle_perc = acceleration_desired / max_acceleration # check why it's acceleration_desired here but desired_acceleration in previous function
+        true_throttle_perc = float(np.clip(throttle_perc, -1, 1))
+        
+        return true_throttle_perc
