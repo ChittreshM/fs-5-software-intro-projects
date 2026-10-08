@@ -52,7 +52,7 @@ for i in range(STEPS):
      # Gain scheduling with blending (bumpless transfer):
     # blend = 0 while cruising, rises to 1 as the target drops to 0,
     # so the gains slide gradually from cruise to brake instead of jumping.
-    blend = 1 - car['desired_v'] / MAX_VELOCITY
+    blend = min(1, 3 * (1 - car['desired_v'] / MAX_VELOCITY))
     K_P = CRUISE_GAINS[0] + blend * (BRAKE_GAINS[0] - CRUISE_GAINS[0])
     K_I = CRUISE_GAINS[1] + blend * (BRAKE_GAINS[1] - CRUISE_GAINS[1])
     K_D = CRUISE_GAINS[2] + blend * (BRAKE_GAINS[2] - CRUISE_GAINS[2])
