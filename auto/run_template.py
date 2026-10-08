@@ -49,11 +49,13 @@ for i in range(STEPS):
     remaining_distance = max(FINAL_X - car['x'], 0)
     car['desired_v'] = min(MAX_VELOCITY, (np.sqrt(2 * remaining_distance * BRAKE_DECELERATION)))
 
-    # Gain scheduling: the target only drops below cruise speed once we're braking
-    if car['desired_v'] < MAX_VELOCITY:
-        K_P, K_I, K_D = BRAKE_GAINS
-    else:
-        K_P, K_I, K_D = CRUISE_GAINS
+     # Gain scheduling with blending (bumpless transfer):
+    # blend = 0 while cruising, rises to 1 as the target drops to 0,
+    # so the gains slide gradually from cruise to brake instead of jumping.
+    blend = 1 - car['desired_v'] / MAX_VELOCITY
+    K_P = CRUISE_GAINS[0] + blend * (BRAKE_GAINS[0] - CRUISE_GAINS[0])
+    K_I = CRUISE_GAINS[1] + blend * (BRAKE_GAINS[1] - CRUISE_GAINS[1])
+    K_D = CRUISE_GAINS[2] + blend * (BRAKE_GAINS[2] - CRUISE_GAINS[2])
 
     desired_acceleration, error = calculate_desired_acceleration(car, K_P, K_I, K_D)
     throttle_percentage = acceleration_to_throttle_percentage(desired_acceleration)
