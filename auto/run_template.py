@@ -4,13 +4,25 @@ from pid_template import update
 from pid_template import calculate_desired_acceleration
 from pid_template import acceleration_to_throttle_percentage
 
-K_P = 10 # when kP is too high, then the velocity oscillates around the desired velocity, and there's a sharper increase to the final velocity instead of having smooth acceleration
-K_I = 5
-K_D = 0.0
+'''
+PID Tuning:
+critical gain value (Ku) = 25
+ultimate osciallation period (Tu) = 0.32
+
+Kp = 0.6 * Ku
+Ki = (1.2 * Ku) / Tu
+Kd = 0.075 * Ku * Tu
+
+'''
+
+K_P = 0.8 # when kP is too high, then the velocity oscillates around the desired velocity, and there's a sharper increase to the final velocity instead of having smooth acceleration
+K_I = 0.07
+K_D = 0
  
 STEPS = 550
- 
-car = make_car(desired_v=20.0, dt=0.1)
+
+# when the desired velocity is lower, using just kP shows that the car reaches desired velocity but starts oscillating and decreases slightly
+car = make_car(desired_v=3.0, dt=0.1)
 
 #WRITE CODE HERE
 velocities = []
