@@ -48,9 +48,11 @@ def calculate_desired_acceleration(car: dict, K_P: float, K_I: float = 0.0, K_D:
         error_integral = error * car['dt']
         car['net_integral'] += error_integral
 
-        
-        error_derivative = (error - car['prev_error'])/(car['dt'])
-        car['prev_error'] = error
+        if car['error_prev'] is None:
+               error_derivative = 0.0
+        else:
+                error_derivative = (error - car['error_prev'])/(car['dt'])
+        car['error_prev'] = error
 
         desired_acceleration = (K_P * error) + (K_I * car['net_integral']) + (K_D * error_derivative)
 
