@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import numpy as np
 from pid_template import make_car
 from pid_template import update
 from pid_template import calculate_desired_acceleration
@@ -15,21 +16,33 @@ Kd = 0.075 * Ku * Tu
 
 '''
 
-K_P = 0.8 # when kP is too high, then the velocity oscillates around the desired velocity, and there's a sharper increase to the final velocity instead of having smooth acceleration
-K_I = 0.07
+K_P = 3 # when kP is too high, then the velocity oscillates around the desired velocity, and there's a sharper increase to the final velocity instead of having smooth acceleration
+K_I = 0.02
 K_D = 0
- 
-STEPS = 550
 
 # when the desired velocity is lower, using just kP shows that the car reaches desired velocity but starts oscillating and decreases slightly
-car = make_car(desired_v=3.0, dt=0.1)
+car = make_car(desired_v=20.0, dt=0.1)
+ 
+STEPS = 1000
+
+# Extension 1 (stopping point): low K_P (0.3) braked too late and overshot to ~335 m.
+# Higher K_P (3) tracks the braking curve closely; tiny K_I (0.02) limits windup.
+MAX_VELOCITY = car['desired_v']
+FINAL_X = 300.0
+BRAKE_DECELERATION = 3.0
 
 #WRITE CODE HERE
 velocities = []
 errors = []
 times = []
+positions = []
+desired_vs = []
 
 for i in range(STEPS):
+
+    remaining_distance = max(FINAL_X - car['x'], 0)
+    car['desired_v'] = min(MAX_VELOCITY, (np.sqrt(2 * remaining_distance * BRAKE_DECELERATION)))
+
     desired_acceleration, error = calculate_desired_acceleration(car, K_P, K_I, K_D)
     throttle_percentage = acceleration_to_throttle_percentage(desired_acceleration)
 
@@ -38,11 +51,13 @@ for i in range(STEPS):
     velocities.append(car['v'])
     errors.append(error)
     times.append(car['t'])
+    positions.append(car['x'])
+    desired_vs.append(car['desired_v'])
 
 fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
 
 ax1.plot(times, velocities, label='velocity')
-ax1.axhline(car['desired_v'], color = 'red', linestyle = '--', label = 'desired velocity')
+ax1.plot(times, desired_vs, '--', color='red', label='desired velocity')
 ax1.set_ylabel('Velocity (m/s)')
 ax1.set_title('Velocity over Time')
 ax1.legend()
@@ -52,6 +67,15 @@ ax2.axhline(0, color = 'gray', linestyle = '--')
 ax2.set_xlabel('Time (s)')
 ax2.set_ylabel('Error (m/s)')
 ax2.set_title('Error over Time')
+
+fig2, ax = plt.subplots()
+ax.plot(positions, velocities, label="velocity")
+ax.plot(positions, desired_vs, "--", label="desired velocity")
+ax.axvline(FINAL_X, color="red", linestyle="--", label="stop point")  # vertical line
+ax.set_xlabel("Distance (m)")
+ax.set_ylabel("Velocity (m/s)")
+ax.set_title("Velocity over Distance")
+ax.legend()
 
 plt.tight_layout()
 plt.show()
