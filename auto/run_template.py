@@ -4,8 +4,8 @@ from pid_template import update
 from pid_template import calculate_desired_acceleration
 from pid_template import acceleration_to_throttle_percentage
 
-K_P = 0.5
-K_I = 0.0
+K_P = 10 # when kP is too high, then the velocity oscillates around the desired velocity, and there's a sharper increase to the final velocity instead of having smooth acceleration
+K_I = 5
 K_D = 0.0
  
 STEPS = 550
