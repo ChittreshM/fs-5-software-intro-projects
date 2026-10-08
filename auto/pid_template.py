@@ -43,6 +43,23 @@ def update(car: dict, throttle_perc: float, mass: float = 1000, max_throttle_for
 def calculate_desired_acceleration(car: dict, K_P: float, K_I: float = 0.0, K_D: float = 0.0) -> tuple[float, float]:
         #input: car["v"], car["desired_v"] (floats)
         #output: desired acceleration and error tuple(float, float)
+
+        """
+        PID controller: calculates how much acceleration the car needs to reach its desired velocity.
+        Combines the proportional (current error), integral (accumulated error),
+        and derivative (rate of change of error) terms.
+
+        Inputs:
+        car: dictionary containing the car's state variables (uses v, desired_v, dt,
+             net_integral, error_prev, and updates net_integral and error_prev)
+        K_P: float, proportional gain
+        K_I: float, integral gain (default 0, which turns the I term off)
+        K_D: float, derivative gain (default 0, which turns the D term off)
+
+        Outputs:
+        tuple(float, float): (desired acceleration in m/s^2, error in m/s)
+        """
+
         error = car['desired_v'] - car['v']
 
         error_integral = error * car['dt']
@@ -64,6 +81,20 @@ def calculate_desired_acceleration(car: dict, K_P: float, K_I: float = 0.0, K_D:
 def acceleration_to_throttle_percentage(acceleration_desired: float, mass: float = 1000, max_throttle_force: float = 5000) -> float:
         #input: desired_acceleration(float)
         #output: throttle percentage (float, -1 to 1)
+
+        """
+        Converts a desired acceleration into a throttle percentage for the motor,
+        using Newton's second law (a = F / m) to find the max possible acceleration.
+
+        Inputs:
+        acceleration_desired: float, acceleration the controller wants (m/s^2)
+        mass: float, mass of the car (kg). Must match the mass used in update()
+        max_throttle_force: float, motor force at 100% throttle (N). Must match update()
+
+        Outputs:
+        float, throttle percentage clipped to -1 to 1 (-100% to 100%)
+        """
+        
         max_acceleration = max_throttle_force / mass  # check difference between force and max_throttle_force
         throttle_perc = acceleration_desired / max_acceleration # check why it's acceleration_desired here but desired_acceleration in previous function
         true_throttle_perc = float(np.clip(throttle_perc, -1, 1))

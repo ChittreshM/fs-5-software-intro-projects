@@ -22,6 +22,7 @@ K_I = 0.02
 K_D = 0
 '''
 
+# Gain scheduling (extension 2): separate gains for cruising and braking
 CRUISE_GAINS = (0.3, 0.02, 0.0)   # (K_P, K_I, K_D) gentle: smooth acceleration
 BRAKE_GAINS  = (3.0, 0.02, 0.0)   # aggressive: tracks the braking curve tightly
 
@@ -32,9 +33,10 @@ STEPS = 1000
 
 # Extension 1 (stopping point): low K_P (0.3) braked too late and overshot to ~335 m.
 # Higher K_P (3) tracks the braking curve closely; tiny K_I (0.02) limits windup.
-MAX_VELOCITY = car['desired_v']
-FINAL_X = 300.0
-BRAKE_DECELERATION = 3.0
+
+MAX_VELOCITY = car['desired_v'] # copy the cruise speed before the loop overwrites desired_v
+FINAL_X = 300.0 # where the car should stop (m)
+BRAKE_DECELERATION = 3.0 # planned braking rate (m/s^2)
 
 #WRITE CODE HERE
 velocities = []
@@ -46,13 +48,15 @@ desired_vs = []
 for i in range(STEPS):
 
     # Stopping point: lower the target speed as we approach FINAL_X
+    # sqrt(2 * a * d) is the fastest speed that can still stop in the remaining distance.
     remaining_distance = max(FINAL_X - car['x'], 0)
     car['desired_v'] = min(MAX_VELOCITY, (np.sqrt(2 * remaining_distance * BRAKE_DECELERATION)))
 
-     # Gain scheduling with blending (bumpless transfer):
+    # Gain scheduling with blending (bumpless transfer):
     # blend = 0 while cruising, rises to 1 as the target drops to 0,
     # so the gains slide gradually from cruise to brake instead of jumping.
-    blend = min(1, 3 * (1 - car['desired_v'] / MAX_VELOCITY))
+
+    blend = min(1, 3 * (1 - car['desired_v'] / MAX_VELOCITY))  # The 3x makes it reach full brake gains sooner, reducing lag at the start of braking.
     K_P = CRUISE_GAINS[0] + blend * (BRAKE_GAINS[0] - CRUISE_GAINS[0])
     K_I = CRUISE_GAINS[1] + blend * (BRAKE_GAINS[1] - CRUISE_GAINS[1])
     K_D = CRUISE_GAINS[2] + blend * (BRAKE_GAINS[2] - CRUISE_GAINS[2])
@@ -70,18 +74,21 @@ for i in range(STEPS):
 
 fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
 
+# Velocity over time: shows how closely the car's speed follows the target, including cruising and braking
 ax1.plot(times, velocities, label='velocity')
 ax1.plot(times, desired_vs, '--', color='red', label='desired velocity')
 ax1.set_ylabel('Velocity (m/s)')
 ax1.set_title('Velocity over Time')
 ax1.legend()
 
+# Error over time: shows how far off the controller is at each step (0 = on target)
 ax2.plot(times, errors)
 ax2.axhline(0, color = 'gray', linestyle = '--')
 ax2.set_xlabel('Time (s)')
 ax2.set_ylabel('Error (m/s)')
 ax2.set_title('Error over Time')
 
+# Velocity over distance: shows whether the car slows to a stop exactly at FINAL_X
 fig2, ax = plt.subplots()
 ax.plot(positions, velocities, label="velocity")
 ax.plot(positions, desired_vs, "--", label="desired velocity")
