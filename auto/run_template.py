@@ -16,9 +16,14 @@ Kd = 0.075 * Ku * Tu
 
 '''
 
+'''
 K_P = 3 # when kP is too high, then the velocity oscillates around the desired velocity, and there's a sharper increase to the final velocity instead of having smooth acceleration
 K_I = 0.02
 K_D = 0
+'''
+
+CRUISE_GAINS = (0.3, 0.02, 0.0)   # (K_P, K_I, K_D) gentle: smooth acceleration
+BRAKE_GAINS  = (3.0, 0.02, 0.0)   # aggressive: tracks the braking curve tightly
 
 # when the desired velocity is lower, using just kP shows that the car reaches desired velocity but starts oscillating and decreases slightly
 car = make_car(desired_v=20.0, dt=0.1)
@@ -40,8 +45,15 @@ desired_vs = []
 
 for i in range(STEPS):
 
+    # Stopping point: lower the target speed as we approach FINAL_X
     remaining_distance = max(FINAL_X - car['x'], 0)
     car['desired_v'] = min(MAX_VELOCITY, (np.sqrt(2 * remaining_distance * BRAKE_DECELERATION)))
+
+    # Gain scheduling: the target only drops below cruise speed once we're braking
+    if car['desired_v'] < MAX_VELOCITY:
+        K_P, K_I, K_D = BRAKE_GAINS
+    else:
+        K_P, K_I, K_D = CRUISE_GAINS
 
     desired_acceleration, error = calculate_desired_acceleration(car, K_P, K_I, K_D)
     throttle_percentage = acceleration_to_throttle_percentage(desired_acceleration)
