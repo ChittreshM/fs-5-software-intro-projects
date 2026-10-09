@@ -6,7 +6,7 @@ This repository holds the onboarding projects for the three software subsystems.
 - [Data Team Onboarding Projects](data)
 - [Autonomous Team Onboarding Projects](auto)
 
-# Project Completed - Auto
+# Project Completed - Autonomous
 # Extensions Completed:
   1. Stopping point implemented so robot accelerates and stops at the desired position
   2. Implemented gain scheduling to change gains based on acceleration and braking
